@@ -128,6 +128,11 @@ SPECTACULAR_SETTINGS = {
 	'TITLE': 'WePlay API',
 	'VERSION': '1.0.0',
 	'SERVE_INCLUDE_SCHEMA': False,
+	"SWAGGER_UI_SETTINGS": {
+		"persistAuthorization": True,
+	},
+	'SORT_OPERATIONS': False,
+
 }
 
 # Simple JWT configuration
@@ -138,7 +143,7 @@ SIMPLE_JWT = {
 }
 
 
-if PRODUCTION:
+if not PRODUCTION:
 	EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 	EMAIL_HOST = "smtp.gmail.com"
 	EMAIL_PORT = env('EMAIL_PORT', default=587, cast=int)
@@ -149,3 +154,6 @@ if PRODUCTION:
 else:
 	EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 	DEFAULT_FROM_EMAIL = "Dev <dev@dev.com>"
+
+
+GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID')

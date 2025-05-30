@@ -8,7 +8,7 @@ from datetime import timedelta
 class CustomUser(AbstractBaseUser, PermissionsMixin):
 	full_name = models.CharField(max_length=255)
 	email = models.EmailField(unique=True)
-	profile_picture = models.FileField(upload_to='profile_pictures/', blank=True, null=True)
+	profile_picture = models.URLField(blank=True, null=True)
 	is_google_account = models.BooleanField(default=False)
 
 	is_active = models.BooleanField(default=True)
@@ -37,8 +37,16 @@ def default_expiry():
 
 
 class Tokens(models.Model):
-	user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+	user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='token')
 	token = models.CharField(max_length=6)
 	expiry = models.DateTimeField(default=default_expiry)
 
 	created_at = models.DateTimeField(auto_now_add=True)
+
+	def __str__(self):
+		return f'Token for {self.user.email} - {self.token}'
+
+	class Meta:
+		ordering = ('-created_at',)
+		verbose_name = 'Token'
+		verbose_name_plural = 'Tokens'
