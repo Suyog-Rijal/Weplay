@@ -9,9 +9,9 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from account.serializers import RegisterSerializer, LoginSerializer, GoogleAuthSerializer, MeSerializer, \
-	ForgotPasswordSerializer, VerifySerializer, ResendVerificationSerializer
+	ForgotPasswordSerializer, VerifySerializer, ResendVerificationSerializer, VerifyJwtSerializer
 from django.contrib.auth import get_user_model
 from utils import generate_token, send_verification_email_async
 
@@ -171,3 +171,24 @@ class ResendVerificationView(APIView):
 		except Exception as e:
 			print(f"Error in resend verification: {e}")
 			return Response({'detail': 'Something went wrong.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@extend_schema(tags=["Authentication"], auth=[], request=VerifyJwtSerializer)
+class VerifyJwtView(APIView):
+	permission_classes = [AllowAny]
+
+	def post(self, request):
+		token = request.data.get('token')
+		if not token:
+			return Response({'detail': 'Token is required.'}, status=status.HTTP_400_BAD_REQUEST)
+		try:
+			access_token = AccessToken(token)
+			user = User.objects.get(id=access_token['user_id'])
+			return Response({
+				'email': user.email,
+				'full_name': user.full_name,
+				'token': token
+			}, status=status.HTTP_200_OK)
+		except Exception as e:
+			print(f"Error in JWT verification: {e}")
+			return Response({'detail': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)

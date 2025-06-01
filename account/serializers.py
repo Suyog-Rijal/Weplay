@@ -69,3 +69,7 @@ class VerifySerializer(Serializer):
 
 class ResendVerificationSerializer(Serializer):
 	email = serializers.EmailField(max_length=255, write_only=True)
+
+
+class VerifyJwtSerializer(Serializer):
+	token = serializers.CharField(max_length=500, write_only=True)
