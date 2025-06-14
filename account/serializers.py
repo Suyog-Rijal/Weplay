@@ -2,7 +2,6 @@ from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer, Serializer
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import get_user_model
-
 from account.models import Tokens
 
 User = get_user_model()
@@ -73,3 +72,12 @@ class ResendVerificationSerializer(Serializer):
 
 class VerifyJwtSerializer(Serializer):
 	token = serializers.CharField(max_length=500, write_only=True)
+
+
+class SimpleUserSerializer(ModelSerializer):
+	class Meta:
+		model = User
+		fields = (
+			'id',
+			'full_name',
+		)
