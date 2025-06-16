@@ -10,8 +10,8 @@ class Content(models.Model):
 	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 	title = models.CharField(max_length=200)
 	url = models.URLField()
-	image_url = models.URLField(blank=True, null=True, help_text="Optional image URL for the content")
-	duration = models.PositiveIntegerField(help_text="Duration in seconds")
+	thumbnail = models.URLField(blank=True, null=True, help_text="Optional image URL for the content")
+	duration = models.PositiveIntegerField(blank=True, null=True, help_text="Duration in seconds")
 
 	def __str__(self):
 		return self.title
@@ -57,7 +57,7 @@ class Room(models.Model):
 			return False
 
 	def total_participants(self):
-		return self.participants.count()
+		return self.participants.count() + 1
 
 	def get_content(self):
 		return self.current_content if self.current_content else None

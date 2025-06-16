@@ -1,7 +1,7 @@
 from rest_framework.serializers import Serializer, ModelSerializer
 from rest_framework import serializers
 from account.serializers import SimpleUserSerializer
-from .models import Room, Participant, Content
+from .models import Room, Content
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -31,7 +31,7 @@ class ContentSerializer(ModelSerializer):
 			'id',
 			'title',
 			'url',
-			'image_url',
+			'thumbnail',
 			'duration',
 		]
 
@@ -61,3 +61,5 @@ class RoomListSerializer(ModelSerializer):
 		return ContentSerializer(obj.current_content).data if obj.current_content else None
 
 
+class UpdateRoomContentSerializer(Serializer):
+	video_id = serializers.CharField(required=True)

@@ -3,10 +3,10 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
+from youtube.views import fetch_youtube_video_details
 from .models import Room
 from rest_framework.response import Response
-from .serializers import RoomCreateSerializer, RoomListSerializer
-import time
+from .serializers import RoomCreateSerializer, RoomListSerializer, UpdateRoomContentSerializer
 
 
 @extend_schema_view(
@@ -35,9 +35,9 @@ class RoomViewSet(ModelViewSet):
 class DirectRoomJoinView(APIView):
 	permission_classes = [IsAuthenticated]
 
-	@extend_schema(tags=["Room"], summary="Direct Room join", description="Allows a user to join an existing public room directly.")
+	@extend_schema(tags=["Room"], summary="Direct Room join",
+	               description="Allows a user to join an existing public room directly.")
 	def post(self, request, room_id=None):
-		time.sleep(3)
 		user = request.user
 
 		if not room_id:
@@ -83,9 +83,10 @@ class DirectRoomJoinView(APIView):
 class ExitRoomView(APIView):
 	permission_classes = [IsAuthenticated]
 
-	@extend_schema(tags=["Room"], summary="Exit Room", description="Allows a user to exit a room they are currently in.")
+	@extend_schema(tags=["Room"], summary="Exit Room",
+	               description="Allows a user to exit a room they are currently in.")
 	def post(self, request, room_id=None):
-		time.sleep(3)
+
 		user = request.user
 
 		if not room_id:
@@ -129,7 +130,6 @@ class DestroyRoomView(APIView):
 
 	@extend_schema(tags=["Room"], summary="Destroy Room", description="Allows a host to destroy a room they created.")
 	def post(self, request, room_id=None):
-		time.sleep(3)
 
 		user = request.user
 
@@ -152,6 +152,52 @@ class DestroyRoomView(APIView):
 
 			return Response(
 				{"detail": "Room successfully destroyed."},
+				status=status.HTTP_200_OK
+			)
+		except Exception as e:
+			print("Unexpected error:", e)
+			return Response(
+				{"detail": "An unexpected error occurred."},
+				status=status.HTTP_500_INTERNAL_SERVER_ERROR
+			)
+
+
+class UpdateRoomContentVIew(APIView):
+	permission_classes = [IsAuthenticated]
+
+	@extend_schema(tags=["Room"], request=UpdateRoomContentSerializer, summary="Update Room Content", description="Allows a host to update the content(Currently playing video) of a room.")
+	def post(self, request, room_id=None):
+		if not room_id:
+			return Response(
+				{"detail": "Room ID is required."},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+
+		video_id = request.data.get('video_id')
+		if not video_id:
+			return Response(
+				{"detail": "Video ID is required."},
+				status=status.HTTP_400_BAD_REQUEST
+			)
+
+		try:
+			room = Room.objects.filter(id=room_id, host=request.user, is_active=True).first()
+			if not room:
+				return Response({
+					"detail": "Room not found or you are not the host."
+				}, status=status.HTTP_404_NOT_FOUND)
+
+			data = fetch_youtube_video_details(video_id)
+			if not data:
+				return Response(
+					{"detail": "Failed to fetch video details."},
+					status=status.HTTP_400_BAD_REQUEST
+				)
+
+			url = f"https://www.youtube.com/watch?v={video_id}"
+
+			return Response(
+				{"detail": "Room content updated successfully."},
 				status=status.HTTP_200_OK
 			)
 		except Exception as e:
