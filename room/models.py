@@ -28,7 +28,7 @@ class Room(models.Model):
 	]
 
 	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-	name = models.CharField(max_length=100, unique=True)
+	name = models.CharField(max_length=100)
 	description = models.TextField(blank=True, null=True)
 	host = models.ForeignKey(User, related_name='room', on_delete=models.CASCADE)
 	category = models.CharField(max_length=2, choices=CATEGORY_CHOICES, default=CATEGORY_MOVIE)
