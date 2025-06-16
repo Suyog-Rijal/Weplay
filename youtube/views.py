@@ -26,7 +26,7 @@ def format_number(num_str):
 class SearchView(APIView):
 	permission_classes = [IsAuthenticated]
 
-	@extend_schema(tags=["Youtube"])
+	@extend_schema(tags=["Youtube"], description="Search for YouTube videos by query.")
 	def get(self, request, query=None):
 		max_results = 25
 		if not query:

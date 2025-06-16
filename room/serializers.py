@@ -59,3 +59,5 @@ class RoomListSerializer(ModelSerializer):
 
 	def get_content(self, obj):
 		return ContentSerializer(obj.current_content).data if obj.current_content else None
+
+

@@ -64,7 +64,7 @@ class Room(models.Model):
 
 	@property
 	def is_full(self):
-		return self.participants.count() >= self.max_participants
+		return self.participants.count() + 1 >= self.max_participants
 
 	def __str__(self):
 		return f"{self.name}"
