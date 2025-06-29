@@ -95,7 +95,6 @@ class SearchView(APIView):
 			print("Parsing error:", e)
 			return Response({'detail': 'Something went wrong.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-		print("Number of results:", len(results))
 		return Response(results, status=status.HTTP_200_OK)
 
 

@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from youtube.views import fetch_youtube_video_details
-from .models import Room
+from .models import Room, Content
 from rest_framework.response import Response
 from .serializers import RoomCreateSerializer, RoomListSerializer, UpdateRoomContentSerializer
 
@@ -195,6 +195,21 @@ class UpdateRoomContentVIew(APIView):
 				)
 
 			url = f"https://www.youtube.com/watch?v={video_id}"
+			if room.current_content:
+				room.current_content.url = url
+				room.current_content.title = data.get('title', "Untitled Video")
+				room.current_content.thumbnail = data.get('thumbnail', "")
+				room.current_content.duration = data.get('length_seconds', 0)
+				room.current_content.save()
+			else:
+				content = Content.objects.create(
+					title=data.get('title', "Untitled Video"),
+					url=url,
+					thumbnail=data.get('thumbnail', ""),
+					duration=data.get('duration', 0)
+				)
+				room.current_content = content
+			room.save()
 
 			return Response(
 				{"detail": "Room content updated successfully."},
