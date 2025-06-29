@@ -16,6 +16,9 @@ PRODUCTION = env('PRODUCTION', default=True)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 INSTALLED_APPS = [
+	'channels',
+	'daphne',
+
 	'django.contrib.admin',
 	'django.contrib.auth',
 	'django.contrib.contenttypes',
@@ -65,6 +68,24 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'Weplay.wsgi.application'
+ASGI_APPLICATION = 'Weplay.asgi.application'
+
+# Channels configuration
+if PRODUCTION:
+	CHANNEL_LAYERS = {
+		"default": {
+			"BACKEND": "channels_redis.core.RedisChannelLayer",
+			"CONFIG": {
+				"hosts": [("127.0.0.1", 6379)],
+			},
+		},
+	}
+else:
+	CHANNEL_LAYERS = {
+		"default": {
+			"BACKEND": "channels.layers.InMemoryChannelLayer",
+		},
+	}
 
 # Database
 if PRODUCTION:

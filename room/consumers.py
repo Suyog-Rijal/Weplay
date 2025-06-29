@@ -1,0 +1,116 @@
+import uuid
+from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
+from room.models import Room
+import json
+
+
+class RoomConsumer(AsyncWebsocketConsumer):
+	async def connect(self):
+		user = self.scope.get('user')
+		if user is None or user.is_anonymous:
+			await self.close(code=4004, reason="Forbidden: Authentication required.")
+			return
+
+		room_id_str = self.scope['url_route']['kwargs'].get('room_id')
+		try:
+			room_id = uuid.UUID(room_id_str)
+		except (ValueError, TypeError):
+			await self.close(code=4000, reason="Invalid room ID.")
+			return
+
+		exists = await self.room_exists(room_id)
+		if not exists:
+			await self.close(code=4001, reason="Room does not exist.")
+			return
+
+		self.user = user
+		self.room_id = room_id
+		self.room_group_name = f"room_{room_id}"
+
+		await self.channel_layer.group_add(
+			self.room_group_name,
+			self.channel_name
+		)
+		await self.accept()
+
+		await self.channel_layer.group_send(
+			self.room_group_name,
+			{
+				'type': 'system_message',
+				'payload': {
+					'user_id': str(user.id),
+					'full_name': user.full_name,
+					'user_profile_picture': user.profile_picture or "",
+					'message': f"{user.full_name} joined the room."
+				}
+			}
+		)
+
+	async def disconnect(self, close_code):
+		await self.channel_layer.group_discard(
+			self.room_group_name,
+			self.channel_name
+		)
+
+		await self.channel_layer.group_send(
+			self.room_group_name,
+			{
+				'type': 'system_message',
+				'payload': {
+					'user_id': str(self.user.id),
+					'full_name': self.user.full_name,
+					'user_profile_picture': self.user.profile_picture or "",
+					'message': f"{self.user.full_name} left the room."
+				}
+			}
+		)
+
+	async def receive(self, text_data=None, bytes_data=None):
+		data = json.loads(text_data)
+		event_type = data.get('type')
+
+		if event_type == 'chat_message':
+			await self.handle_chat_message(data)
+
+	async def system_message(self, event):
+		await self.send(text_data=json.dumps({
+			'type': 'system_message',
+			'payload': event.get('payload', {})
+		}))
+
+	async def chat_message(self, event):
+		await self.send(text_data=json.dumps({
+			'type': 'chat_message',
+			'payload': event.get('payload', {})
+		}))
+
+	async def handle_chat_message(self, data):
+		message = data.get('message', '').strip()
+		if not message:
+			return
+
+		await self.channel_layer.group_send(
+			self.room_group_name,
+			{
+				'type': 'chat_message',
+				'payload': {
+					'user_id': str(self.user.id),
+					'full_name': self.user.full_name,
+					'user_profile_picture': self.user.profile_picture or "",
+					'message': message
+				}
+			}
+		)
+
+	@database_sync_to_async
+	def room_exists(self, room_id):
+		return Room.objects.filter(id=room_id).exists()
+
+
+class FallBackConsumer(AsyncWebsocketConsumer):
+	async def connect(self):
+		await self.close(code=4002, reason="Forbidden.")
+
+	async def disconnect(self, close_code):
+		await self.close(code=4003, reason="Forbidden.")

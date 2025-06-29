@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.utils.text import Truncator
+
 from .models import Room, Participant, Content
 
 
@@ -13,19 +15,24 @@ class ParticipantInline(admin.TabularInline):
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
 	list_display = (
-		'name', 'host', 'category', 'current_content',
-		'max_participants', 'is_public', 'is_active', 'is_full_display', 'created_at'
+		'name', 'host', 'category', 'current_content_short',
+		'max_participants', 'is_public', 'is_active', 'is_full_display'
 	)
 	list_filter = ('category', 'is_public', 'is_active')
 	search_fields = ('name', 'description', 'host__email', 'host__full_name')
 	readonly_fields = ('created_at', 'updated_at')
-	autocomplete_fields = ['host', 'current_content']
+	autocomplete_fields = ['host']
 	inlines = [ParticipantInline]
 
 	def is_full_display(self, obj):
 		return obj.is_full
 	is_full_display.boolean = True
 	is_full_display.short_description = 'Is Full?'
+
+	def current_content_short(self, obj):
+		return Truncator(obj.current_content).chars(50)
+	current_content_short.short_description = 'Current Content'
+
 
 
 @admin.register(Participant)
