@@ -117,6 +117,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
 class HomeConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
 		user = self.scope.get('user')
+		print(f"Connecting user: {user}")
 		if user is None or user.is_anonymous:
 			await self.close(code=4004, reason="Forbidden: Authentication required.")
 			return
@@ -144,6 +145,7 @@ class HomeConsumer(AsyncWebsocketConsumer):
 
 class FallBackConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
+		print("Here we go")
 		await self.close(code=4002, reason="Forbidden.")
 
 	async def disconnect(self, close_code):

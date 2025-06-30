@@ -6,13 +6,14 @@ from rest_framework.viewsets import ModelViewSet
 from youtube.views import fetch_youtube_video_details
 from .models import Room, Content
 from rest_framework.response import Response
-from .serializers import RoomCreateSerializer, RoomListSerializer, UpdateRoomContentSerializer
+from .serializers import RoomCreateSerializer, RoomListSerializer, UpdateRoomContentSerializer, RoomStateGetSerializer
 
 
 @extend_schema_view(
 	list=extend_schema(tags=["Room"], summary="Get all Public Rooms", description="Returns all active, public rooms."),
 	create=extend_schema(tags=["Room"], summary="Create a New Room", description="Creates a new room as host."),
-	retrieve=extend_schema(tags=["Room"], summary="Get Specific Room Details", description="Returns details of a specific room."),
+	retrieve=extend_schema(tags=["Room"], summary="Get Specific Room Details",
+	                       description="Returns details of a specific room."),
 )
 class RoomViewSet(ModelViewSet):
 	permission_classes = [IsAuthenticated]
@@ -165,7 +166,8 @@ class DestroyRoomView(APIView):
 class UpdateRoomContentVIew(APIView):
 	permission_classes = [IsAuthenticated]
 
-	@extend_schema(tags=["Room"], request=UpdateRoomContentSerializer, summary="Update Room Content", description="Allows a host to update the content(Currently playing video) of a room.")
+	@extend_schema(tags=["Room"], request=UpdateRoomContentSerializer, summary="Update Room Content",
+	               description="Allows a host to update the content(Currently playing video) of a room.")
 	def post(self, request, room_id=None):
 		if not room_id:
 			return Response(
@@ -221,3 +223,31 @@ class UpdateRoomContentVIew(APIView):
 				{"detail": "An unexpected error occurred."},
 				status=status.HTTP_500_INTERNAL_SERVER_ERROR
 			)
+
+
+class RoomStateView(APIView):
+	permission_classes = [IsAuthenticated]
+
+	@extend_schema(tags=["Room"], summary="Update Room Content", description="Allows a user to get the current state of a room.")
+	def get(self, request, room_id=None):
+		if not room_id:
+			return Response({
+				"detail": "Room ID is required."
+			}, status=status.HTTP_400_BAD_REQUEST)
+
+		try:
+			room = Room.objects.filter(id=room_id, is_active=True).first()
+			if not room:
+				return Response({
+					'detail': "Room not found."
+				}, status=status.HTTP_404_NOT_FOUND)
+
+			serializer = RoomStateGetSerializer(room, context={'request': request})
+			return Response({
+				'room': serializer.data,
+			}, status=status.HTTP_200_OK)
+		except Exception as e:
+			print("Unexpected error:", e)
+			return Response({
+				"detail": "An unexpected error occurred."
+			}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
