@@ -38,7 +38,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
 			self.room_group_name,
 			{
 				'type': 'system_message',
-				'payload': {
+				'data': {
 					'user_id': str(user.id),
 					'full_name': user.full_name,
 					'user_profile_picture': user.profile_picture or "",
@@ -57,7 +57,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
 			self.room_group_name,
 			{
 				'type': 'system_message',
-				'payload': {
+				'data': {
 					'user_id': str(self.user.id),
 					'full_name': self.user.full_name,
 					'user_profile_picture': self.user.profile_picture or "",
@@ -76,13 +76,13 @@ class RoomConsumer(AsyncWebsocketConsumer):
 	async def system_message(self, event):
 		await self.send(text_data=json.dumps({
 			'type': 'system_message',
-			'payload': event.get('payload', {})
+			'data': event.get('data', {})
 		}))
 
 	async def chat_message(self, event):
 		await self.send(text_data=json.dumps({
 			'type': 'chat_message',
-			'payload': event.get('payload', {})
+			'data': event.get('data', {})
 		}))
 
 	async def handle_chat_message(self, data):
@@ -94,7 +94,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
 			self.room_group_name,
 			{
 				'type': 'chat_message',
-				'payload': {
+				'data': {
 					'user_id': str(self.user.id),
 					'full_name': self.user.full_name,
 					'user_profile_picture': self.user.profile_picture or "",
@@ -103,9 +103,43 @@ class RoomConsumer(AsyncWebsocketConsumer):
 			}
 		)
 
+	async def content_change(self, event):
+		await self.send(text_data=json.dumps({
+			'type': 'content_change',
+			'data': event.get('data', {})
+		}))
+
 	@database_sync_to_async
 	def room_exists(self, room_id):
 		return Room.objects.filter(id=room_id).exists()
+
+
+class HomeConsumer(AsyncWebsocketConsumer):
+	async def connect(self):
+		user = self.scope.get('user')
+		if user is None or user.is_anonymous:
+			await self.close(code=4004, reason="Forbidden: Authentication required.")
+			return
+
+		self.user = user
+		self.home_group_name = f"home"
+		await self.channel_layer.group_add(
+			self.home_group_name,
+			self.channel_name
+		)
+		await self.accept()
+
+	async def disconnect(self, close_code):
+		await self.channel_layer.group_discard(
+			self.home_group_name,
+			self.channel_name
+		)
+
+	async def send_home_update(self, event):
+		await self.send(text_data=json.dumps({
+			"type": event["event"],
+			"data": event["room"]
+		}))
 
 
 class FallBackConsumer(AsyncWebsocketConsumer):

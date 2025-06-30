@@ -49,6 +49,7 @@ class LoginView(APIView):
 		return Response({
 			'email': user.email,
 			'full_name': user.full_name,
+			'profile_picture': user.profile_picture if user.profile_picture else None,
 			'token': str(refresh.access_token),
 		}, status=status.HTTP_200_OK)
 
@@ -187,6 +188,7 @@ class VerifyJwtView(APIView):
 			return Response({
 				'email': user.email,
 				'full_name': user.full_name,
+				'profile_picture': user.profile_picture if user.profile_picture else None,
 				'token': token
 			}, status=status.HTTP_200_OK)
 		except Exception as e:

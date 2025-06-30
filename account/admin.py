@@ -11,7 +11,7 @@ class UserAdmin(BaseUserAdmin):
 	search_fields = ('email', 'full_name')
 	ordering = ('-created_at',)
 	fieldsets = (
-		(None, {'fields': ('email', 'full_name', 'password', 'is_verified', 'is_google_account', 'is_staff', 'is_active')}),
+		(None, {'fields': ('email', 'full_name', 'profile_picture', 'password', 'is_verified', 'is_staff', 'is_active')}),
 	)
 	add_fieldsets = (
 		(None, {
