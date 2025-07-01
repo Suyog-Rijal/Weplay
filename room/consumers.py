@@ -3,6 +3,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from room.models import Room
 import json
+from datetime import datetime
 
 
 class RoomConsumer(AsyncWebsocketConsumer):
@@ -34,16 +35,23 @@ class RoomConsumer(AsyncWebsocketConsumer):
 		)
 		await self.accept()
 
+		now = datetime.now()
+		hour = now.strftime("%I").lstrip("0") or "0"
+		minute = now.strftime("%M")
+		ampm = now.strftime("%p")
+		formatted_time = f"{hour}:{minute} {ampm}"
+
 		await self.channel_layer.group_send(
 			self.room_group_name,
 			{
 				'type': 'system_message',
 				'data': {
-					'user_id': str(user.id),
-					'full_name': user.full_name,
-					'user_profile_picture': user.profile_picture or "",
-					'message': f"{user.full_name} joined the room."
-				}
+					'user_id': '0',
+					'full_name': 'System',
+					'user_profile_picture': "",
+					'message': f"{user.full_name} joined the room.",
+					'timestamp': formatted_time
+		}
 			}
 		)
 
@@ -52,23 +60,33 @@ class RoomConsumer(AsyncWebsocketConsumer):
 			self.room_group_name,
 			self.channel_name
 		)
+		now = datetime.now()
+		hour = now.strftime("%I").lstrip("0") or "0"
+		minute = now.strftime("%M")
+		ampm = now.strftime("%p")
+		formatted_time = f"{hour}:{minute} {ampm}"
 
 		await self.channel_layer.group_send(
 			self.room_group_name,
 			{
 				'type': 'system_message',
 				'data': {
-					'user_id': str(self.user.id),
-					'full_name': self.user.full_name,
-					'user_profile_picture': self.user.profile_picture or "",
-					'message': f"{self.user.full_name} left the room."
+					'user_id': '0',
+					'full_name': 'System',
+					'user_profile_picture': "",
+					'message': f"{self.user.full_name} left the room.",
+					'timestamp': formatted_time
 				}
 			}
 		)
 
 	async def receive(self, text_data=None, bytes_data=None):
-		data = json.loads(text_data)
-		event_type = data.get('type')
+		try:
+			data = json.loads(text_data)
+			event_type = data.get('type')
+		except Exception as e:
+			print(f"Error parsing message: {e}")
+			return
 
 		if event_type == 'chat_message':
 			await self.handle_chat_message(data)

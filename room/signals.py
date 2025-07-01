@@ -71,13 +71,13 @@ def broadcast_room_deletion(sender, instance, **kwargs):
 	)
 
 
-# @receiver(post_save, sender=Room)
-# def initialize_room_state(sender, instance, created, **kwargs):
-# 	if created:
-# 		State.objects.get_or_create(
-# 			room=instance,
-# 			defaults={
-# 				'is_playing': False,
-# 				'current_time': 0
-# 			}
-# 		)
+@receiver(post_save, sender=Room)
+def initialize_room_state(sender, instance, created, **kwargs):
+	if created:
+		State.objects.get_or_create(
+			room=instance,
+			defaults={
+				'is_playing': False,
+				'current_time': 0
+			}
+		)
