@@ -2,7 +2,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch import receiver
-from room.models import Room
+from room.models import Room, State
 from room.serializers import RoomListSerializer
 
 
@@ -69,3 +69,15 @@ def broadcast_room_deletion(sender, instance, **kwargs):
 			"room": serializer.data
 		}
 	)
+
+
+# @receiver(post_save, sender=Room)
+# def initialize_room_state(sender, instance, created, **kwargs):
+# 	if created:
+# 		State.objects.get_or_create(
+# 			room=instance,
+# 			defaults={
+# 				'is_playing': False,
+# 				'current_time': 0
+# 			}
+# 		)

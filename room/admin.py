@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.text import Truncator
 
-from .models import Room, Participant, Content
+from .models import Room, Participant, Content, State
 
 
 class ParticipantInline(admin.TabularInline):
@@ -26,13 +26,14 @@ class RoomAdmin(admin.ModelAdmin):
 
 	def is_full_display(self, obj):
 		return obj.is_full
+
 	is_full_display.boolean = True
 	is_full_display.short_description = 'Is Full?'
 
 	def current_content_short(self, obj):
 		return Truncator(obj.current_content).chars(50)
-	current_content_short.short_description = 'Current Content'
 
+	current_content_short.short_description = 'Current Content'
 
 
 @admin.register(Participant)
@@ -48,3 +49,8 @@ class ParticipantAdmin(admin.ModelAdmin):
 class ContentAdmin(admin.ModelAdmin):
 	list_display = ('title', 'url', 'duration')
 	search_fields = ('title',)
+
+
+@admin.register(State)
+class StateAdmin(admin.ModelAdmin):
+	list_display = ('room', 'current_time', 'is_playing')

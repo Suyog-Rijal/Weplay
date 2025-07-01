@@ -23,7 +23,6 @@ class RegisterView(APIView):
 
 	@extend_schema(tags=["Authentication"], request=RegisterSerializer, auth=[])
 	def post(self, request):
-		print(request.data)
 		serializer = RegisterSerializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
 		serializer.save()
@@ -115,7 +114,6 @@ class ForgotPasswordView(APIView):
 			token = generate_token(user)
 			threading.Thread(target=send_verification_email_async, args=(user, token)).start()
 		except Exception as e:
-			print("First check point")
 			print(f"Error in forgot password: {e}")
 			return Response({'detail': 'Something went wrong.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -126,6 +124,7 @@ class VerifyView(APIView):
 	@extend_schema(tags=["Authentication"], auth=[], request=VerifySerializer)
 	def post(self, request):
 		try:
+			print(request.data)
 			email = request.data.get('email')
 			token_value = request.data.get('token')
 
@@ -150,7 +149,13 @@ class VerifyView(APIView):
 			user.save()
 			token_obj.delete()
 
-			return Response({'detail': 'Email verified successfully.'}, status=status.HTTP_200_OK)
+			refresh = RefreshToken.for_user(user)
+			return Response({
+				'email': user.email,
+				'full_name': user.full_name,
+				'profile_picture': user.profile_picture if user.profile_picture else None,
+				'token': str(refresh.access_token),
+			}, status=status.HTTP_200_OK)
 
 		except Exception as e:
 			print(f"Error in verification: {e}")

@@ -72,7 +72,7 @@ class Room(models.Model):
 
 class State(models.Model):
 	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-	room = models.ForeignKey(Room, related_name='state', on_delete=models.CASCADE)
+	room = models.OneToOneField(Room, related_name='state', on_delete=models.CASCADE)
 	is_playing = models.BooleanField(default=False)
 	current_time = models.IntegerField(default=0, help_text="Current playback time in seconds")
 

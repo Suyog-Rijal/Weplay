@@ -14,9 +14,9 @@ test_emails = [
 
 def send_verification_email_async(user, token):
 	try:
-		# if user.email not in test_emails:
-		# 	print(f"Skipping email for {user.email} as it is not in the test emails list.")
-		# 	return
+		if user.email not in test_emails:
+			print(f"Skipping email for {user.email} as it is not in the test emails list.")
+			return
 		context = {
 			'user': user,
 			'token': token,
